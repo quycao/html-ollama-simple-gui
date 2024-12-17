@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="page-title">ask Selma - your Ollama Chat Assistant</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background-color: #f5f5f5;
+        }
+        header {
+            background-color: #5DADE2;
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        header h1 {
+            margin: 0;
+            font-size: 1.5em;
+        }
+        #chat {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            background-color: white;
+            margin: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .message {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            line-height: 1.4;
+        }
+        .message.user {
+            text-align: right;
+            background-color: #e8f1ff;
+            color: #0056b3;
+        }
+        .message.assistant {
+            text-align: left;
+            background-color: #f0f8ff;
+            color: #007BFF;
+        }
+        .message p {
+            margin: 0;
+            white-space: pre-wrap;
+        }
+        #input-container {
+            display: flex;
+            border-top: 1px solid #ccc;
+            padding: 10px 20px;
+            background-color: #fff;
+            box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
+        }
+        #input-container input {
+            flex: 1;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        #input-container button {
+            margin-left: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background-color: #007BFF;
+            color: white;
+            cursor: pointer;
+        }
+        #input-container button:hover {
+            background-color: #0056b3;
+        }
+        #spinner {
+            display: none;
+            margin-left: 10px;
+            align-self: center;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #007BFF;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1 id="header-title">ask Selma - your Ollama Chat Assistant</h1>
+    </header>
+    <div id="chat"></div>
+    <div id="input-container">
+        <input type="text" id="user-input" placeholder="Enter message...">
+        <button id="send-button">Send</button>
+        <button id="new-button">New</button>
+        <div id="spinner"></div>
+    </div>
+
+    <script>
+        // Configuration parameter
+        const CHAT_TITLE  = "ask Selma - your Ollama Chat Assistant";
+        const CHAT_MODEL  = "llama3.1"
+        const OLLAMA_PATH = "http://localhost:11434"
+
+        // Set title on page load
+        document.getElementById('page-title').textContent = CHAT_TITLE;
+        document.getElementById('header-title').textContent = CHAT_TITLE;
+
+        async function ollamaRespond(userMessage) {
+            const messages = {
+                model: CHAT_MODEL,
+                messages: all_messages,
+                stream: true,
+                max_token: 300
+            };
+
+            try { 
+                const response = await fetch('http://localhost:11434/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(messages)
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Complete error response:', errorText);
+                    throw new Error(`HTTP error! status: ${response.status}, ${errorText}`);
+                }
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let partialMessage = '';
+                addMessage(partialMessage, 'assistant', false);
+
+                while (true) {
+                    const { done, value } = await reader.read();
+
+                    if (done) break;
+
+                    const chunk = decoder.decode(value, { stream: true });
+
+                    try {
+                        // Parsing JSON streaming output
+                        const lines = chunk.split('\n').filter(line => line.trim() !== '');
+                        for (const line of lines) {
+                            if (line.startsWith('data:')) {
+                                const data = line.substring(5).trim();
+
+                                if (data === '[DONE]') {
+                                    // Stream end reached
+                                    all_messages.push({
+                                        role: 'assistant', 
+                                        content: partialMessage
+                                    });
+                                    break;
+                                }
+
+                                const jsonData = JSON.parse(data);
+                                if (jsonData.choices && jsonData.choices[0].delta && jsonData.choices[0].delta.content) {
+                                    partialMessage += jsonData.choices[0].delta.content;
+
+                                    // Update message in chat
+                                    addMessage(partialMessage, 'assistant', true);
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        console.error('Error parsing stream:', e);
+                    }
+                }
+
+                return partialMessage;
+
+            } catch (error) {
+                console.error('Error:', error);
+                addMessage("There was a problem connecting to the chat.", 'assistant');
+            }
+        }
+
+        // Messages
+        let all_messages = [];
+
+        // DOM elements
+        const chatContainer = document.getElementById('chat');
+        const userInput = document.getElementById('user-input');
+        const sendButton = document.getElementById('send-button');
+        const newButton = document.getElementById('new-button');
+        const spinner = document.getElementById('spinner');
+
+        // Function to add or update a message in the chat
+        function addMessage(text, sender, update = false) {
+
+            if (update && sender === 'assistant') {
+                const assistantMessages = chatContainer.getElementsByClassName('message assistant');
+                if (assistantMessages.length > 0) {
+                    assistantMessages[assistantMessages.length - 1].querySelector('p').textContent = text;
+                    return;
+                }
+            }
+
+            const message = document.createElement('div');
+            message.className = `message ${sender}`;
+
+            const messageText = document.createElement('p');
+            messageText.textContent = text;
+
+            message.appendChild(messageText);
+            chatContainer.appendChild(message);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // Show spinner
+        function showSpinner() {
+            spinner.style.display = 'block';
+        }
+
+        // Hide spinner
+        function hideSpinner() {
+            spinner.style.display = 'none';
+        }
+
+        // Disable input field and button
+        function disableInput() {
+            userInput.disabled = true;
+            sendButton.disabled = true;
+        }
+
+        // Enable input field and button
+        function enableInput() {
+            userInput.disabled = false;
+            sendButton.disabled = false;
+        }
+
+        // Send button event listener
+        sendButton.addEventListener('click', async () => {
+            const userMessage = userInput.value.trim();
+            if (!userMessage) return;
+
+            // Add user message
+             all_messages.push({
+                role: 'user', 
+                content: userMessage
+            });
+
+            addMessage(userMessage, 'user');
+            userInput.value = '';
+
+            // Show spinner and disable input
+            showSpinner();
+            disableInput();
+
+            // Get response from Ollama and add
+            await ollamaRespond(userMessage);
+
+            // Hide spinner and enable input
+            hideSpinner();
+            enableInput();
+        });
+
+        // Enter key for input
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendButton.click();
+            }
+        });
+
+        // New button event listener
+        newButton.addEventListener('click', () => {
+            all_messages = []; // Deletes all saved messages
+            chatContainer.innerHTML = ''; // Clears chat area
+            userInput.value = ''; // Clears text input field
+        });
+    </script>
+</body>
+</html>
