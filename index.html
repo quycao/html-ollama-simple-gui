@@ -122,6 +122,20 @@
         document.getElementById('page-title').textContent = CHAT_TITLE;
         document.getElementById('header-title').textContent = CHAT_TITLE;
 
+        // Markdown parsing function
+        function parseMarkdown(text) {
+            // First, handle nested formatting (bold inside italic or vice versa)
+            // Replace **_text_** and *__text__*
+            text = text.replace(/\*\*_(.*?)_\*\*/g, '<strong><em>$1</em></strong>');
+            text = text.replace(/\*__(.*)__\*/g, '<em><strong>$1</strong></em>');
+            
+            // Then handle standard bold and italic
+            text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
+            
+            return text;
+        }
+
         async function ollamaRespond(userMessage) {
             const messages = {
                 model: CHAT_MODEL,
@@ -207,11 +221,14 @@
 
         // Function to add or update a message in the chat
         function addMessage(text, sender, update = false) {
+            // Parse Markdown
+            const parsedText = parseMarkdown(text);
 
             if (update && sender === 'assistant') {
                 const assistantMessages = chatContainer.getElementsByClassName('message assistant');
                 if (assistantMessages.length > 0) {
-                    assistantMessages[assistantMessages.length - 1].querySelector('p').textContent = text;
+                    const messageElement = assistantMessages[assistantMessages.length - 1].querySelector('p');
+                    messageElement.innerHTML = parsedText;
                     return;
                 }
             }
@@ -220,7 +237,7 @@
             message.className = `message ${sender}`;
 
             const messageText = document.createElement('p');
-            messageText.textContent = text;
+            messageText.innerHTML = parsedText;
 
             message.appendChild(messageText);
             chatContainer.appendChild(message);
