@@ -6,6 +6,8 @@ The solution: **Ask Selma** consists of just a single HTML page **index.html** -
 
 <img src="img/image.png" width="600">
 
+<img src="img/image1.png" width="600">
+
 You don't need any additional libraries. The HTML server can work without internet access,  
 which can be necessary in some companies for security reasons.
 
@@ -28,6 +30,7 @@ There are only a few parameters you can easily modify in the index.html file:
 const CHAT_TITLE = "ask Selma - your Ollama Chat Assistant";
 const CHAT_MODEL = "llama3.1"
 const OLLAMA_PATH = "http://localhost:11434"
+const DARK_MODE = false;
 ```
 
 ## Support
