@@ -1,0 +1,1422 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="page-title">ask Selma - Notes with Ollama</title>
+    <style>
+        :root {
+            /* Light Mode Colors */
+            --background-primary: #f5f5f5;
+            --background-secondary: white;
+            --header-background: #5DADE2;
+            --text-primary: #0056b3;
+            --text-assistant: #007BFF;
+            --input-background: white;
+            --input-border: #ccc;
+            --button-background: #007BFF;
+            --button-hover: #0056b3;
+            --user-message-background: #e8f1ff;      
+            --assistant-message-background: #f0f8ff; 
+            --user-message-text: #0056b3;         
+            --assistant-message-text: #00447B;
+        }
+
+        [data-theme='dark'] {
+            --background-primary: #1A1A1A;    
+            --background-secondary: #2A2A2A;    
+            --header-background: #252525;       
+            --text-primary: #E0E0E0;           
+            --text-assistant: #B0D0FF;         
+            --input-background: #333333;        
+            --input-border: #444444;            
+            --button-background: #3A3A3A;       
+            --button-hover: #4A4A4A;            
+            --user-message-background: #2C3E50;    
+            --assistant-message-background: #1E4A70; 
+            --user-message-text: #E0E0E0;          
+            --assistant-message-text: #E0E0E0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: var(--background-primary);
+            color: var(--text-primary);
+            transition: background-color 0.3s, color 0.3s;
+            min-height: 100vh;
+        }
+
+        .header {
+            background-color: var(--header-background);
+            padding: 10px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            color: white;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo {
+            width: 32px;
+            height: 32px;
+            background: var(--background-secondary);
+            border-radius: 6px;
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 16px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            background: var(--button-background);
+            color: white;
+        }
+
+        .btn:hover {
+            background: var(--button-hover);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 24px auto;
+            padding: 0 20px;
+            display: flex;
+            gap: 24px;
+            height: calc(100vh - 100px);
+        }
+
+        .sidebar {
+            width: 280px;
+            background: var(--background-secondary);
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            color: var(--text-primary);
+        }
+
+        .main-content {
+            flex: 1;
+            background: var(--background-secondary);
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .message {
+            display: flex;
+            margin-bottom: 20px;
+            gap: 12px;
+        }
+
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            background: var(--button-background);
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .message-content {
+            background: var(--assistant-message-background);
+            padding: 12px 16px;
+            border-radius: 8px;
+            max-width: 80%;
+            color: var(--assistant-message-text);
+        }
+
+        .message.user .message-content {
+            background: var(--user-message-background);
+            color: var(--user-message-text);
+        }
+
+        .input-container {
+            border-top: 1px solid var(--input-border);
+            padding: 16px;
+            background: var(--background-secondary);
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 12px;
+            padding-right: 44px;
+            border: 1px solid var(--input-border);
+            border-radius: 8px;
+            font-size: 14px;
+            resize: none;
+            min-height: 48px;
+            max-height: 150px;
+            outline: none;
+            background: var(--input-background);
+            color: var(--text-primary);
+        }
+
+        .input-field:focus {
+            border-color: var(--text-assistant);
+        }
+
+        .send-button {
+            position: absolute;
+            right: 8px;
+            bottom: 8px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--button-background);
+            color: white;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .send-button:hover {
+            background: var(--button-hover);
+        }
+
+        .source-item {
+            padding: 8px 12px;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .source-item:hover {
+            background: var(--user-message-background);
+        }
+
+        .source-item.active {
+            background: var(--user-message-background);
+            color: var(--user-message-text);
+        }
+
+        .add-button {
+            padding: 8px 12px;
+            border: 1px solid var(--input-border);
+            border-radius: 4px;
+            background: var(--background-secondary);
+            color: var(--text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+            width: 100%;
+        }
+
+        .add-button:hover {
+            background: var(--user-message-background);
+        }
+
+        .note-item {
+            padding: 12px;
+            background: var(--assistant-message-background);
+            border-radius: 4px;
+            margin-bottom: 12px;
+            color: var(--assistant-message-text);
+            position: relative;
+        }
+
+        .note-title {
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .note-content {
+            font-size: 13px;
+            opacity: 0.8;
+        }
+
+        .sidebar h2 {
+            margin-bottom: 16px;
+            color: var(--text-primary);
+        }
+
+        .dialog-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .dialog {
+            background: var(--background-secondary);
+            padding: 24px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .dialog h3 {
+            margin: 0 0 16px 0;
+            color: var(--text-primary);
+        }
+
+        .dialog-content {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .input-group label {
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .input-group input {
+            padding: 8px;
+            border: 1px solid var(--input-border);
+            border-radius: 4px;
+            background: var(--input-background);
+            color: var(--text-primary);
+        }
+
+        .dialog-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 24px;
+        }
+
+        .source-item .delete-btn {
+            margin-left: auto;
+            opacity: 0;
+            transition: opacity 0.2s;
+            color: var(--text-primary);
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px 8px;
+        }
+
+        .source-item:hover .delete-btn {
+            opacity: 1;
+        }
+
+        .error-message {
+            color: #dc3545;
+            font-size: 14px;
+            margin-top: 4px;
+            display: none;
+        }
+
+        #theme-toggle {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 2.5em;
+            cursor: pointer;
+            margin-left: 10px;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .note-item .delete-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            opacity: 0;
+            transition: opacity 0.2s;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px 8px;
+            color: var(--text-primary);
+        }
+
+        .note-item:hover .delete-btn {
+            opacity: 1;
+        }
+
+        .source-badge {
+            font-size: 12px;
+            padding: 2px 6px;
+            background: var(--button-background);
+            color: white;
+            border-radius: 4px;
+            margin-left: 8px;
+        }
+
+        #noteContent {
+            width: 100%;
+            min-height: 100px;
+            padding: 8px;
+            border: 1px solid var(--input-border);
+            border-radius: 4px;
+            background: var(--input-background);
+            color: var(--text-primary);
+            resize: vertical;
+        }
+
+        .spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            margin-right: 8px;
+            border: 2px solid var(--button-background);
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .input-field:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .send-button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+        
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <div class="logo"></div>
+                <h1 id="header-title">ask Selma - Notes with Ollama</h1>
+            </div>
+            <div class="header-buttons">
+                <button class="btn">New Chat</button>
+                <button class="btn">Clear All</button>
+                <button class="btn" onclick="window.location.href='index.html'">Chat Only</button>
+                <button id="theme-toggle">◐</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Left Sidebar -->
+        <aside class="sidebar">
+            <h2>Documents</h2>
+            <button class="add-button" id="addDocumentBtn">
+                <span>+</span>
+                <span>Add Document</span>
+            </button>
+            <div id="documentsList">
+                <!-- Documents will be inserted here by JavaScript -->
+            </div>
+        </aside>
+
+        <!-- Add Document Dialog -->
+        <div class="dialog-overlay" id="addDocumentDialog">
+            <div class="dialog">
+                <h3>Add Document</h3>
+                <div class="dialog-content">
+                    <div class="input-group">
+                        <label for="fileInput">Select Text File (*.txt)</label>
+                        <input type="file" id="fileInput" accept=".txt">
+                        <div class="error-message" id="fileError"></div>
+                    </div>
+                    <div class="input-group">
+                        <label>Or</label>
+                    </div>
+                    <div class="input-group">
+                        <label for="urlInput">Enter URL</label>
+                        <input type="url" id="urlInput" placeholder="https://...">
+                        <div class="error-message" id="urlError"></div>
+                    </div>
+                    <div class="dialog-buttons">
+                        <button class="btn" id="cancelBtn">Cancel</button>
+                        <button class="btn btn-primary" id="addBtn">Add</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="chat-container" id="chatContainer">
+                <div class="message">
+                    <div class="message-avatar"></div>
+                    <div id="message-content" class="message-content">
+                        Welcome! I can help you get more out of your documents. What would you like to know?
+                    </div>
+                </div>
+            </div>
+            <div class="input-container">
+                <div class="input-wrapper">
+                    <div id="spinner" class="spinner"></div>
+                    <textarea 
+                        id="userInput" 
+                        class="input-field" 
+                        placeholder="Enter your question..."
+                        rows="2"
+                    ></textarea>
+                    <button id="sendButton" class="send-button">Send</button>
+                </div>
+            </div>
+        </main>
+
+        <!-- Right Sidebar -->
+        <aside class="sidebar">
+            <h2 id="notes-header">Notes</h2>
+            <button class="add-button" id="addNoteBtn">
+                <span>+</span>
+                <span>Add Note</span>
+            </button>
+            <div id="notesList">
+                <!-- Notes will be inserted here by JavaScript -->
+            </div>
+        </aside>
+
+        <!-- Add Note Dialog -->
+        <div class="dialog-overlay" id="addNoteDialog">
+            <div class="dialog">
+                <h3>Add Note</h3>
+                <div class="dialog-content">
+                    <div class="input-group">
+                        <label for="noteTitle">Title</label>
+                        <input type="text" id="noteTitle" required>
+                        <div class="error-message" id="noteTitleError"></div>
+                    </div>
+                    <div class="input-group">
+                        <label for="noteContent">Content</label>
+                        <textarea id="noteContent" rows="4" required></textarea>
+                        <div class="error-message" id="noteContentError"></div>
+                    </div>
+                    <div class="input-group">
+                        <label>
+                            <input type="checkbox" id="noteIsSource">
+                            Use as source for queries
+                        </label>
+                    </div>
+                    <div class="dialog-buttons">
+                        <button class="btn" id="cancelNoteBtn">Cancel</button>
+                        <button class="btn btn-primary" id="submitNoteBtn">Add</button>
+                    </div>
+                </div>
+            </div>
+        </div>        
+    </div>
+
+    <script>
+        // Configuration parameters
+        const CHAT_TITLE = "ask Selma - Notes with Ollama";
+        const CHAT_MODEL = "llama3.1";
+        const OLLAMA_PATH = "http://localhost:11434";
+        const DARK_MODE = false;
+        const WELCOME_MESSAGE = "Welcome! I can help you get more out of your documents. What would you like to know?";
+
+        const version = "0.1.0";
+
+        let dataChanged = false;
+
+         // Set title on page load 
+        document.getElementById('page-title').textContent = CHAT_TITLE;
+        document.getElementById('header-title').textContent = CHAT_TITLE;
+        document.getElementById('message-content').textContent = WELCOME_MESSAGE;
+
+        // IndexDB setup
+        let db;
+        const DB_NAME = 'DocumentsDB';
+        const STORE_NAME = 'documents';
+        const NOTES_STORE = 'notes';
+    
+        const initDB = () => {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, 2);
+    
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => {
+                    db = request.result;
+                    resolve(db);
+                };
+    
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains(STORE_NAME)) {
+                        const store = db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
+                        store.createIndex('title', 'title', { unique: false });
+                    }
+                    if (!db.objectStoreNames.contains(NOTES_STORE)) {
+                        const notesStore = db.createObjectStore(NOTES_STORE, { keyPath: 'id', autoIncrement: true });
+                        notesStore.createIndex('title', 'title', { unique: false });
+                        notesStore.createIndex('isSource', 'isSource', { unique: false });
+                    }
+                };
+            });
+        };
+    
+        // Modified initialization
+        async function initialize() {
+            try {
+                await initDB();
+                await Promise.all([loadDocuments(), loadNotes()]);
+            } catch (error) {
+                console.error('Failed to initialize database:', error);
+            }
+        }
+    
+        // Document loading
+        const loadDocuments = () => {
+            return new Promise((resolve, reject) => {
+                if (!db) {
+                    reject(new Error('Database not initialized'));
+                    return;
+                }
+    
+                const transaction = db.transaction([STORE_NAME], 'readonly');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.getAll();
+    
+                request.onsuccess = () => {
+                    const documents = request.result;
+                    displayDocuments(documents);
+                    resolve(documents);
+                };
+    
+                request.onerror = () => reject(request.error);
+            });
+        };
+    
+        // Note loading
+        const loadNotes = () => {
+            return new Promise((resolve, reject) => {
+                if (!db) {
+                    reject(new Error('Database not initialized'));
+                    return;
+                }
+    
+                const transaction = db.transaction([NOTES_STORE], 'readonly');
+                const store = transaction.objectStore(NOTES_STORE);
+                const request = store.getAll();
+    
+                request.onsuccess = () => {
+                    const notes = request.result;
+                    displayNotes(notes);
+                    resolve(notes);
+                };
+    
+                request.onerror = () => reject(request.error);
+            });
+        };
+    
+        // Document management
+        const addDocument = async (title, content, type = 'file') => {
+            const transaction = db.transaction([STORE_NAME], 'readwrite');
+            const store = transaction.objectStore(STORE_NAME);
+            
+            const doc = {
+                title,
+                content,
+                type,
+                timestamp: new Date().toISOString()
+            };
+
+            return new Promise((resolve, reject) => {
+                const request = store.add(doc);
+                request.onsuccess = () => {
+                    dataChanged = true; // Set flag when document is added
+                    loadDocuments();
+                    resolve(request.result);
+                };
+                request.onerror = () => reject(request.error);
+            });
+        };
+
+    
+        const deleteDocument = (id) => {
+            const transaction = db.transaction([STORE_NAME], 'readwrite');
+            const store = transaction.objectStore(STORE_NAME);
+            
+            return new Promise((resolve, reject) => {
+                const request = store.delete(id);
+                request.onsuccess = () => {
+                    dataChanged = true; // Set flag when document is deleted
+                    loadDocuments();
+                    resolve();
+                };
+                request.onerror = () => reject(request.error);
+            });
+        };
+    
+        // Notes management
+        const addNote = async (title, content, isSource) => {
+            const transaction = db.transaction([NOTES_STORE], 'readwrite');
+            const store = transaction.objectStore(NOTES_STORE);
+            
+            const note = {
+                title,
+                content,
+                isSource,
+                timestamp: new Date().toISOString()
+            };
+
+            return new Promise((resolve, reject) => {
+                const request = store.add(note);
+                request.onsuccess = () => {
+                    if (isSource) dataChanged = true; // Set flag only if note is used as source
+                    loadNotes();
+                    resolve(request.result);
+                };
+                request.onerror = () => reject(request.error);
+            });
+        };
+
+    
+        const deleteNote = (id) => {
+            // First check if the note being deleted is a source
+            const transaction = db.transaction([NOTES_STORE], 'readonly');
+            const store = transaction.objectStore(NOTES_STORE);
+            
+            store.get(id).onsuccess = function(event) {
+                const note = event.target.result;
+                
+                // Now proceed with deletion
+                const deleteTransaction = db.transaction([NOTES_STORE], 'readwrite');
+                const deleteStore = deleteTransaction.objectStore(NOTES_STORE);
+                
+                const request = deleteStore.delete(id);
+                request.onsuccess = () => {
+                    if (note && note.isSource) dataChanged = true; // Set flag only if deleted note was a source
+                    loadNotes();
+                };
+                request.onerror = (error) => console.error('Error deleting note:', error);
+            };
+        };
+
+        const updateNote = (id, title, content, isSource) => {
+            const transaction = db.transaction([NOTES_STORE], 'readwrite');
+            const store = transaction.objectStore(NOTES_STORE);
+            
+            // First get the original note to check if isSource changed
+            store.get(id).onsuccess = function(event) {
+                const originalNote = event.target.result;
+                
+                const note = {
+                    id,
+                    title,
+                    content,
+                    isSource,
+                    timestamp: new Date().toISOString()
+                };
+
+                const request = store.put(note);
+                request.onsuccess = () => {
+                    // Set flag if source status changed or if content changed while being a source
+                    if ((originalNote.isSource !== isSource) || 
+                        (isSource && (originalNote.content !== content || originalNote.title !== title))) {
+                        dataChanged = true;
+                    }
+                    loadNotes();
+                };
+                request.onerror = (error) => console.error('Error updating note:', error);
+            };
+        };
+
+        // Add a function to check if data has changed
+        const hasDataChanged = () => {
+            return dataChanged;
+        };
+
+        // Add a function to reset the data changed flag
+        const resetDataChanged = () => {
+            dataChanged = false;
+        };
+    
+        // UI Functions
+        const displayDocuments = (documents) => {
+            const list = document.getElementById('documentsList');
+            list.innerHTML = '';
+    
+            documents.forEach(doc => {
+                const item = document.createElement('div');
+                item.className = 'source-item';
+                item.innerHTML = `
+                    <span>📄</span>
+                    <span>${doc.title}</span>
+                    <button class="delete-btn" data-id="${doc.id}">✕</button>
+                `;
+                list.appendChild(item);
+            });
+    
+            // Add delete event listeners
+            document.querySelectorAll('.source-item .delete-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const id = parseInt(btn.dataset.id);
+                    deleteDocument(id);
+                });
+            });
+        };
+    
+        const displayNotes = (notes) => {
+            const container = document.getElementById('notesList');
+            container.innerHTML = '';
+            
+            notes.forEach(note => {
+                const noteElement = document.createElement('div');
+                noteElement.className = 'note-item';
+                noteElement.innerHTML = `
+                    <div class="note-title">
+                        ${note.title}
+                        ${note.isSource ? '<span class="source-badge">Source</span>' : ''}
+                        <button class="delete-btn" data-id="${note.id}">✕</button>
+                    </div>
+                    <div class="note-content">${note.content}</div>
+                `;
+                
+                // Add double-click handler
+                noteElement.addEventListener('dblclick', () => openEditNoteDialog(note));
+                
+                container.appendChild(noteElement);
+            });
+
+            // Add delete event listeners
+            document.querySelectorAll('.note-item .delete-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const id = parseInt(btn.dataset.id);
+                    deleteNote(id);
+                });
+            });
+        };
+    
+        // File handling
+        const readFile = (file) => {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = (e) => reject(e.error);
+                reader.readAsText(file);
+            });
+        };
+    
+        // URL handling
+        const fetchUrl = async (url) => {
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Failed to fetch URL');
+                return await response.text();
+            } catch (error) {
+                throw new Error('Failed to fetch URL');
+            }
+        };
+    
+        // Dialog management for Documents
+        const documentDialog = document.getElementById('addDocumentDialog');
+        const addDocumentBtn = document.getElementById('addDocumentBtn');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const addBtn = document.getElementById('addBtn');
+        const fileInput = document.getElementById('fileInput');
+        const urlInput = document.getElementById('urlInput');
+    
+        const showDocumentDialog = () => documentDialog.style.display = 'flex';
+        const hideDocumentDialog = () => {
+            documentDialog.style.display = 'none';
+            fileInput.value = '';
+            urlInput.value = '';
+            document.getElementById('fileError').style.display = 'none';
+            document.getElementById('urlError').style.display = 'none';
+        };
+    
+        // Event Listeners for Documents
+        addDocumentBtn.addEventListener('click', showDocumentDialog);
+        cancelBtn.addEventListener('click', hideDocumentDialog);
+    
+        addBtn.addEventListener('click', async () => {
+            const file = fileInput.files[0];
+            const url = urlInput.value.trim();
+    
+            try {
+                if (file) {
+                    const content = await readFile(file);
+                    await addDocument(file.name, content, 'file');
+                    hideDocumentDialog();
+                } else if (url) {
+                    const content = await fetchUrl(url);
+                    const title = new URL(url).pathname.split('/').pop() || url;
+                    await addDocument(title, content, 'url');
+                    hideDocumentDialog();
+                } else {
+                    document.getElementById('fileError').textContent = 'Please select a file or enter a URL';
+                    document.getElementById('fileError').style.display = 'block';
+                }
+            } catch (error) {
+                const errorElement = file ? 
+                    document.getElementById('fileError') : 
+                    document.getElementById('urlError');
+                errorElement.textContent = error.message;
+                errorElement.style.display = 'block';
+            }
+        });
+    
+        // Dialog management for Notes
+        const noteDialog = document.getElementById('addNoteDialog');
+        const addNoteBtnTrigger = document.getElementById('addNoteBtn');
+        const cancelNoteBtn = document.getElementById('cancelNoteBtn');
+        const submitNoteBtn = document.getElementById('submitNoteBtn');
+        const noteTitleInput = document.getElementById('noteTitle');
+        const noteContentInput = document.getElementById('noteContent');
+        const noteIsSourceInput = document.getElementById('noteIsSource');
+    
+        const showNoteDialog = () => noteDialog.style.display = 'flex';
+
+        const openEditNoteDialog = (note) => {
+            // Set dialog title
+            const dialogTitle = document.querySelector('#addNoteDialog h3');
+            dialogTitle.textContent = 'Edit Note';
+            
+            // Fill in existing values
+            document.getElementById('noteTitle').value = note.title;
+            document.getElementById('noteContent').value = note.content;
+            document.getElementById('noteIsSource').checked = note.isSource;
+            
+            // Store the note ID for later use
+            document.getElementById('addNoteDialog').dataset.editNoteId = note.id;
+            
+            // Show dialog
+            document.getElementById('addNoteDialog').style.display = 'flex';
+            
+            // Update button text
+            document.getElementById('submitNoteBtn').textContent = 'Update';
+        };
+
+        const hideNoteDialog = () => {
+            const dialog = document.getElementById('addNoteDialog');
+            dialog.style.display = 'none';
+            
+            // Reset form
+            document.getElementById('noteTitle').value = '';
+            document.getElementById('noteContent').value = '';
+            document.getElementById('noteIsSource').checked = false;
+            document.getElementById('noteTitleError').style.display = 'none';
+            document.getElementById('noteContentError').style.display = 'none';
+            
+            // Reset dialog title and button
+            document.querySelector('#addNoteDialog h3').textContent = 'Add Note';
+            document.getElementById('submitNoteBtn').textContent = 'Add';
+            
+            // Clear edit ID
+            dialog.dataset.editNoteId = '';
+        };
+    
+        // Event Listeners for Notes
+        addNoteBtnTrigger.addEventListener('click', () => {
+            document.querySelector('#addNoteDialog h3').textContent = 'Add Note';
+            document.getElementById('submitNoteBtn').textContent = 'Add';
+            document.getElementById('addNoteDialog').dataset.editNoteId = '';
+            showNoteDialog();
+        });
+        cancelNoteBtn.addEventListener('click', hideNoteDialog);
+    
+        submitNoteBtn.addEventListener('click', async () => {
+            const title = noteTitleInput.value.trim();
+            const content = noteContentInput.value.trim();
+            const isSource = noteIsSourceInput.checked;
+            const editNoteId = document.getElementById('addNoteDialog').dataset.editNoteId;
+
+            // Validate inputs
+            let hasError = false;
+            if (!title) {
+                document.getElementById('noteTitleError').textContent = 'Title is required';
+                document.getElementById('noteTitleError').style.display = 'block';
+                hasError = true;
+            }
+            if (!content) {
+                document.getElementById('noteContentError').textContent = 'Content is required';
+                document.getElementById('noteContentError').style.display = 'block';
+                hasError = true;
+            }
+
+            if (hasError) return;
+
+            try {
+                if (editNoteId) {
+                    // Update existing note
+                    await updateNote(parseInt(editNoteId), title, content, isSource);
+                } else {
+                    // Add new note
+                    await addNote(title, content, isSource);
+                }
+                hideNoteDialog();
+            } catch (error) {
+                console.error('Failed to save note:', error);
+            }
+        });
+    
+        // Theme toggle functionality
+        const themeToggle = document.getElementById('theme-toggle');
+        
+        function setTheme(isDark) {
+            document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        }
+    
+        // Initialize theme from localStorage or default to light
+        const savedTheme = localStorage.getItem('theme');
+        setTheme(savedTheme === 'dark');
+    
+        // Theme toggle event listener
+        themeToggle.addEventListener('click', () => {
+            const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+            setTheme(!isDarkMode);
+        });
+    
+        // Handle textarea auto-resize
+        const textarea = document.getElementById('userInput');
+        textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+    
+        // Markdown parsing function
+        function parseMarkdown(text) {
+            // First, handle nested formatting (bold inside italic or vice versa)
+            // Replace **_text_** and *__text__*
+            text = text.replace(/\*\*_(.*?)_\*\*/g, '<strong><em>$1</em></strong>');
+            text = text.replace(/\*__(.*)__\*/g, '<em><strong>$1</strong></em>');
+            
+            // Then handle standard bold and italic
+            text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
+            
+            return text;
+        }
+
+        // Messages
+        let all_messages = [];
+
+        const addAllDocumentsToMessages = () => {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(['documents'], 'readonly');
+                const store = transaction.objectStore('documents');
+                const request = store.getAll();
+
+                request.onsuccess = () => {
+                    const documents = request.result;
+                    documents.forEach(doc => {
+                        all_messages.push({
+                            role: 'system',
+                            content: `Document ----\nTitle: ${doc.title}\nContent: ${doc.content}`
+                        });
+                    });
+                    resolve();
+                };
+
+                request.onerror = () => reject(request.error);
+            });
+        };
+
+        const addNotesToMessages = () => {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([NOTES_STORE], 'readonly');
+                const store = transaction.objectStore(NOTES_STORE);
+                const request = store.getAll();
+
+                request.onsuccess = () => {
+                    const notes = request.result;
+                    notes.forEach(note => {
+                        if (note.isSource) {
+                            all_messages.push({
+                                role: 'system',
+                                content: `Document ----\nTitle: ${note.title}\nContent: ${note.content}`
+                            });
+                        }
+                    });
+                    resolve();
+                };
+
+                request.onerror = () => reject(request.error);
+            });
+        };
+
+        const addSystemMessages = async () => {
+            // Add initial system message
+            all_messages.push({
+                role: 'system',
+                content: `You are an expert assistant designed to summarize and analyze documents. 
+Your primary task is to use the provided documents as the main sources of information to answer
+any questions or provide summaries. Follow these guidelines:
+
+    1.	Base your responses primarily on the content of the documents.
+    2.	Clearly reference which document(s) you are using for each point.
+    3.	If synthesizing information from all documents, highlight overlaps, contrasts, or combined insights.
+    4.	Avoid using outside knowledge unless explicitly asked to provide additional context.
+    5.	Structure your responses concisely, with clear attributions to the respective documents where applicable.
+
+Documents will be provided in the next messages
+    `
+            });
+            
+            // Wait for both operations to complete
+            await addAllDocumentsToMessages();
+            await addNotesToMessages();
+        };
+
+        function addSummaryGenerationButton() {
+            const notesSection = document.getElementById('notes-header');
+            const summaryButton = document.createElement('button');
+            summaryButton.className = 'add-button generate-summary-btn';
+            summaryButton.innerHTML = `
+                <span>📋</span>
+                <span>Generate Document Summary</span>
+            `;
+            summaryButton.addEventListener('click', generateDocumentsSummary);
+            notesSection.parentNode.insertBefore(summaryButton, notesSection.nextSibling);
+        }
+
+        async function generateDocumentsSummary() {
+            console.log('Generate Summary function called');
+            const transaction = db.transaction([STORE_NAME], 'readonly');
+            const store = transaction.objectStore(STORE_NAME);
+            const request = store.getAll();
+
+            request.onsuccess = async () => {
+                const documents = request.result;
+                
+                console.log('Documents found:', documents);
+                
+                if (documents.length === 0) {
+                    addMessageToChat('No documents available to summarize.', false, false);
+                    return;
+                }
+
+                const documentsContent = documents.map(doc => 
+                    `Document Title: ${doc.title}\n\nContent:\n${doc.content}`
+                ).join('\n\n---\n\n');
+
+                console.log('Sending documents to Ollama:', documentsContent);
+
+                try {
+                    const response = await fetch(`${OLLAMA_PATH}/v1/chat/completions`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            model: CHAT_MODEL,
+                            messages: [
+                                {
+                                    role: 'system',
+                                    content: 'Generate a comprehensive summary of the following documents. Be concise, clear, and capture key points.'
+                                },
+                                {
+                                    role: 'user',
+                                    content: documentsContent
+                                }
+                            ],
+                            stream: false
+                        })
+                    });
+
+                    console.log('Ollama response status:', response.status);
+
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        console.error('Ollama error:', errorText);
+                        throw new Error(`Failed to generate summary: ${errorText}`);
+                    }
+
+                    const data = await response.json();
+                    const summary = data.choices[0].message.content;
+
+                    console.log('Generated Summary:', summary);
+
+                    // Create a new note with the summary
+                    await addNote('Document Collection Summary', summary, true);
+                    
+                    // Add summary to chat
+                    addMessageToChat('Summary of all documents has been generated and saved as a note.', false, false);
+                    addMessageToChat(summary, false, false);
+                } catch (error) {
+                    console.error('Summary generation error:', error);
+                    addMessageToChat('Error generating document summary: ' + error.message, false, false);
+                }
+            };
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initialize().then(() => {
+                addSystemMessages();
+                addSummaryGenerationButton();
+            });
+        });
+
+        function setLoadingState(isLoading) {
+            const spinner = document.getElementById('spinner');
+            const userInput = document.getElementById('userInput');
+            const sendButton = document.getElementById('sendButton');
+
+            if (isLoading) {
+                spinner.style.display = 'block';
+                userInput.disabled = true;
+                sendButton.disabled = true;
+            } else {
+                spinner.style.display = 'none';
+                userInput.disabled = false;
+                sendButton.disabled = false;
+            }
+        }
+    
+        // Handle message sending
+        document.getElementById('sendButton').addEventListener('click', async () => {
+            const userInput = document.getElementById('userInput');
+            const message = userInput.value.trim();
+            
+            if (!message) return;
+
+            // Activate loading state
+            setLoadingState(true);
+
+            if (hasDataChanged()) {
+                // Store user messages
+                const user_messages = all_messages.filter(msg => msg.role !== 'system');
+                
+                // Clear all messages and rebuild system messages
+                all_messages = [];
+                await addSystemMessages();
+                
+                // Add back user messages
+                all_messages.push(...user_messages);
+                
+                resetDataChanged();
+            }
+    
+            // Add user message to chat
+            addMessageToChat(message, true, false);
+            userInput.value = '';
+            userInput.style.height = 'auto';
+    
+            // Add user message
+            all_messages.push({
+                role: 'user', 
+                content: message
+            });
+
+            const messages = {
+                model: CHAT_MODEL,
+                messages: all_messages,
+                stream: true
+            };
+
+            try {
+                console.log(messages)
+                // Call Ollama
+                const response = await fetch(`${OLLAMA_PATH}/v1/chat/completions`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(messages)
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Complete error response:', errorText);
+                    throw new Error(`HTTP error! status: ${response.status}, ${errorText}`);
+                }
+    
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let partialMessage = '';
+                addMessageToChat(partialMessage, false, false);
+
+                while (true) {
+                    const { done, value } = await reader.read();
+
+                    if (done) break;
+
+                    const chunk = decoder.decode(value, { stream: true });
+
+                    try {
+                        // Parsing JSON streaming output
+                        const lines = chunk.split('\n').filter(line => line.trim() !== '');
+                        for (const line of lines) {
+                            if (line.startsWith('data:')) {
+                                const data = line.substring(5).trim();
+
+                                if (data === '[DONE]') {
+                                    // Stream end reached
+                                    all_messages.push({
+                                        role: 'assistant', 
+                                        content: partialMessage
+                                    });
+                                    break;
+                                }
+
+                                const jsonData = JSON.parse(data);
+
+                                if (jsonData.choices && jsonData.choices[0].delta && jsonData.choices[0].delta.content) {
+                                    partialMessage += jsonData.choices[0].delta.content;
+
+                                    // Update message in chat
+                                    addMessageToChat(partialMessage, false, true);
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        console.error('Error parsing stream:', e);
+                    }
+                }
+
+                return partialMessage;
+
+            } catch (error) {
+                addMessageToChat('Error: Could not connect to Ollama server. Please make sure it\'s running.', false, false);
+            } finally {
+                setLoadingState(false);
+            }
+        });
+    
+        // Add message to chat
+        function addMessageToChat(message, isUser, isUpdate) {
+            // Parse Markdown
+            const parsedText = parseMarkdown(message);
+
+            const chatContainer = document.getElementById('chatContainer');
+
+            if (isUpdate){
+                const messageDiv = document.getElementById('chatContainer').lastElementChild;
+
+                const messageContent = messageDiv.querySelector('.message-content');
+                messageContent.innerHTML = parsedText;
+
+            } else {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${isUser ? 'user' : ''}`;
+                
+                messageDiv.innerHTML = `
+                    <div class="message-avatar"></div>
+                    <div class="message-content">${parsedText}</div>
+                `;
+                
+                chatContainer.appendChild(messageDiv);
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }
+        }
+    
+        // Handle Enter key
+        textarea.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                document.getElementById('sendButton').click();
+            }
+        });
+    
+        // Initialize IndexDB when the page loads
+        document.addEventListener('DOMContentLoaded', initialize);
+
+        // Function to reset the chat history
+        async function resetChatHistory() {
+            // Clear all messages
+            all_messages = [];
+            
+            // Reinitialize system messages
+            await addSystemMessages().then(() => {
+                // Clear chat container and restore welcome message
+                const chatContainer = document.getElementById('chatContainer');
+                chatContainer.innerHTML = `
+                    <div class="message">
+                        <div class="message-avatar"></div>
+                        <div class="message-content">
+                            ${WELCOME_MESSAGE}
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // Add event listener for "New Chat" button
+        document.querySelector('.header-buttons button:first-child').addEventListener('click', resetChatHistory);
+
+        // Function to clear all data
+        async function clearAllData() {
+            try {
+                // Clear documents
+                const documentsTransaction = db.transaction([STORE_NAME], 'readwrite');
+                const documentsStore = documentsTransaction.objectStore(STORE_NAME);
+                documentsStore.clear();
+
+                // Clear notes
+                const notesTransaction = db.transaction([NOTES_STORE], 'readwrite');
+                const notesStore = notesTransaction.objectStore(NOTES_STORE);
+                notesStore.clear();
+
+                // Reset chat history
+                await resetChatHistory();
+
+                // Update UI
+                displayDocuments([]);
+                displayNotes([]);
+
+                // Optional: Show a confirmation message in the chat
+                addMessageToChat('All documents, notes, and chat history have been cleared.', false, false);
+            } catch (error) {
+                console.error('Error clearing data:', error);
+                addMessageToChat('Error: Could not clear data.', false, false);
+            }
+        }
+
+        // Add event listener for "Clear All" button
+        document.querySelector('.header-buttons button:nth-child(2)').addEventListener('click', clearAllData);
+    </script>
+</body>
+</html>
