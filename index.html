@@ -211,8 +211,15 @@
         const CHAT_MODEL = "llama3.1";
         const OLLAMA_PATH = "http://localhost:11434";
         const DARK_MODE = false;
+        const SHOW_NOTE_APP = true;
 
         const version = "0.1.4";
+
+        // Show button note app
+        const notesButton = document.querySelector('.btn[onclick="window.location.href=\'notes.html\'"]');
+        if (!SHOW_NOTE_APP && notesButton) {
+            notesButton.style.display = 'none';
+        }
         
         // Theme toggle functionality
         const themeToggle = document.getElementById('theme-toggle');

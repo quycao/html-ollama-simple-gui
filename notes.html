@@ -143,11 +143,18 @@
         }
 
         .message-avatar {
-            width: 40px;
-            height: 40px;
-            background: var(--button-background);
-            border-radius: 50%;
-            flex-shrink: 0;
+            display: none;
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message.user .message-content {
+            background: var(--user-message-background);
+            color: var(--user-message-text);
+            margin-left: auto;
+            max-width: 80%;
         }
 
         .message-content {
@@ -1129,6 +1136,8 @@ Documents will be provided in the next messages
             const store = transaction.objectStore(STORE_NAME);
             const request = store.getAll();
 
+            setLoadingState(true);
+
             request.onsuccess = async () => {
                 const documents = request.result;
                 
@@ -1189,6 +1198,8 @@ Documents will be provided in the next messages
                 } catch (error) {
                     console.error('Summary generation error:', error);
                     addMessageToChat('Error generating document summary: ' + error.message, false, false);
+                } finally {
+                    setLoadingState(false);
                 }
             };
         }
