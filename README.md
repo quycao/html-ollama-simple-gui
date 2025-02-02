@@ -28,9 +28,11 @@ There are only a few parameters you can easily modify in the index.html file:
 
 ```javascript
 const CHAT_TITLE = "ask Selma - your Ollama Chat Assistant";
-const CHAT_MODEL = "llama3.1"
+const CHAT_MODEL = "llama3"
 const OLLAMA_PATH = "http://localhost:11434"
 const DARK_MODE = false;
+const SHOW_NOTE_APP = false;
+const MODEL_SELECTABLE = true;
 ```
 
 ## Support

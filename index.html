@@ -187,12 +187,35 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        #model-selector {
+            margin-right: 10px;
+            padding: 8px;
+            border-radius: 4px;
+            background-color: var(--input-background);
+            color: var(--text-primary);
+            border: 1px solid var(--input-border);
+            font-size: 16px;
+            appearance: none;
+            background-image: url("data:image/svg+xml;utf8,<svg fill='black' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>");
+            background-repeat: no-repeat;
+            background-position-x: 100%;
+            background-position-y: 50%;
+            padding-right: 30px;
+        }
+
+        [data-theme='dark'] #model-selector {
+            background-image: url("data:image/svg+xml;utf8,<svg fill='white' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>");
+        }
     </style>
 </head>
 <body>
     <header>
         <h1 id="header-title">ask Selma - your Ollama Chat Assistant</h1>
         <div class="header-buttons">
+            <select id="model-selector" style="display: none;">
+                <option disabled selected>Select Model</option>
+            </select>
             <button class="btn" onclick="window.location.href='notes.html'">Notes</button>
             <button id="theme-toggle">◐</button>
         </div>
@@ -208,12 +231,55 @@
     <script>
         // Configuration parameters
         const CHAT_TITLE = "ask Selma - your Ollama Chat Assistant";
-        const CHAT_MODEL = "llama3.1";
+        const CHAT_MODEL = "llama3";
         const OLLAMA_PATH = "http://localhost:11434";
         const DARK_MODE = false;
         const SHOW_NOTE_APP = true;
+        const MODEL_SELECTABLE = true;
 
-        const version = "0.1.4";
+        let AVAILABLE_MODELS = []; 
+
+        const version = "0.1.5";
+
+        // Function to fetch available models
+        async function fetchAvailableModels() {
+            try {
+                const response = await fetch(`${OLLAMA_PATH}/api/tags`);
+                if (!response.ok) {
+                    throw new Error('Failed to fetch models');
+                }
+                const data = await response.json();
+                
+                // Extract just the model names
+                AVAILABLE_MODELS = data.models.map(model => model.name);
+                
+                // Populate dropdown
+                const modelSelector = document.getElementById('model-selector');
+                modelSelector.innerHTML = '<option disabled>Select Model</option>'; // Reset
+                
+                AVAILABLE_MODELS.forEach(model => {
+                    const option = document.createElement('option');
+                    option.value = model;
+                    option.textContent = model;
+                    modelSelector.appendChild(option);
+                });
+
+                // Set previously selected or default model
+                const savedModel = localStorage.getItem('selectedModel') || CHAT_MODEL;
+                if (AVAILABLE_MODELS.includes(savedModel)) {
+                    modelSelector.value = savedModel;
+                }
+
+                // Show selector if models are available
+                if (AVAILABLE_MODELS.length > 0) {
+                    modelSelector.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error fetching models:', error);
+                // Fallback to default model if fetch fails
+                AVAILABLE_MODELS = [CHAT_MODEL];
+            }
+        }
 
         // Show button note app
         const notesButton = document.querySelector('.btn[onclick="window.location.href=\'notes.html\'"]');
@@ -269,8 +335,12 @@
         }
 
         async function ollamaRespond(userMessage) {
+
+            // Retrieve selected model from localStorage or use default
+            const selectedModel = localStorage.getItem('selectedModel') || CHAT_MODEL;
+
             const messages = {
-                model: CHAT_MODEL,
+                model: selectedModel,
                 messages: all_messages,
                 stream: true,
                 max_token: 300
@@ -440,6 +510,20 @@
             chatContainer.innerHTML = ''; // Clears chat area
             userInput.value = ''; // Clears text input field
             userInput.focus();
+        });
+
+        // Model selector
+        document.addEventListener('DOMContentLoaded', function() {
+            const modelSelector = document.getElementById('model-selector');
+            
+            if (MODEL_SELECTABLE) {
+                // Fetch models when page loads
+                fetchAvailableModels();
+
+                modelSelector.addEventListener('change', function() {
+                    localStorage.setItem('selectedModel', this.value);
+                });
+            }
         });
     </script>
 </body>
