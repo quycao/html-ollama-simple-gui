@@ -21,7 +21,8 @@ which can be necessary in some companies for security reasons.
 * **One-file** copy installation
 
 ## Installation
-Simply copy the index.html file.
+Simply copy the index.html file to IIS web folder if you enabled IIS or run a simple web server like mongoose web server 
+https://mongoose.ws/binary/
 
 ## Configuration
 There are only a few parameters you can easily modify in the index.html file:
