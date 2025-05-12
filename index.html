@@ -4,43 +4,55 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title id="page-title">ask Selma - your Ollama Chat Assistant</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         :root {
             /* Light Mode Colors */
-            --background-primary: #f5f5f5;
-            --background-secondary: white;
-            --header-background: #5DADE2;
-            --text-primary: #0056b3;
+            --background-primary: #f4f6f8;
+            --background-secondary: #ffffff;
+            --header-background: #5DADE2; /* Using a softer blue */
+            --text-primary: #333333;
+            --text-secondary: #555555;
             --text-assistant: #007BFF;
-            --input-background: white;
-            --input-border: #ccc;
-            --button-background: #007BFF;
-            --button-hover: #0056b3;
-            --user-message-background: #e8f1ff;      
-            --assistant-message-background: #f0f8ff; 
-            --user-message-text: #0056b3;         
-            --assistant-message-text: #00447B;
+            --input-background: #ffffff;
+            --input-border: #d0d0d0;
+            --button-primary-background: #007BFF;
+            --button-primary-hover: #0056b3;
+            --button-secondary-background: #6c757d;
+            --button-secondary-hover: #5a6268;
+            --user-message-background: #e3f2fd;      
+            --assistant-message-background: #f8f9fa; 
+            --user-message-text: #0d47a1;         
+            --assistant-message-text: #343a40;
+            --spinner-color: #007BFF;
+            --shadow-color: rgba(0, 0, 0, 0.1);
         }
 
         [data-theme='dark'] {
-            /* Dark Mode Color */
-            --background-primary: #1A1A1A;    
-            --background-secondary: #2A2A2A;    
-            --header-background: #252525;       
-            --text-primary: #E0E0E0;           
-            --text-assistant: #B0D0FF;         
-            --input-background: #333333;        
+            /* Dark Mode Colors */
+            --background-primary: #121212;    
+            --background-secondary: #1e1e1e;    
+            --header-background: #1f1f1f;       
+            --text-primary: #e0e0e0;
+            --text-secondary: #bbbbbb;           
+            --text-assistant: #82b1ff;         
+            --input-background: #2c2c2c;        
             --input-border: #444444;            
-            --button-background: #3A3A3A;       
-            --button-hover: #4A4A4A;            
-            --user-message-background: #2C3E50;    
-            --assistant-message-background: #1E4A70; 
-            --user-message-text: #E0E0E0;          
-            --assistant-message-text: #E0E0E0;
+            --button-primary-background: #007BFF;       
+            --button-primary-hover: #3b82f6;            
+            --button-secondary-background: #4a4a4a;
+            --button-secondary-hover: #5a5a5a;
+            --user-message-background: #2a3a4a;    
+            --assistant-message-background: #22272b; 
+            --user-message-text: #e0e0e0;          
+            --assistant-message-text: #e0e0e0;
+            --spinner-color: #82b1ff;
+            --shadow-color: rgba(255, 255, 255, 0.05);
         }
 
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Roboto', Arial, sans-serif;
             margin: 0;
             padding: 0;
             display: flex;
@@ -54,20 +66,24 @@
         header {
             background-color: var(--header-background);
             color: white;
-            padding: 10px 20px;
+            padding: 12px 20px;
             display: flex;
             align-items: center;
             justify-content: space-between;
+            box-shadow: 0 2px 4px var(--shadow-color);
+            flex-wrap: wrap; /* For responsiveness */
         }
 
         header h1 {
             margin: 0;
-            font-size: 1.5em;
+            font-size: 1.4em; /* Slightly reduced for better fit */
+            font-weight: 500;
         }
 
         .header-buttons {
             display: flex;
-            gap: 16px;
+            gap: 10px; /* Reduced gap */
+            align-items: center;
         }
 
         .btn {
@@ -75,112 +91,180 @@
             border: none;
             border-radius: 4px;
             cursor: pointer;
-            font-size: 14px;
-            background: var(--button-background);
+            font-size: 0.9em;
+            font-weight: 500;
+            text-transform: uppercase; /* Material Design touch */
+            background: var(--button-primary-background);
             color: white;
+            transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            box-shadow: 0 2px 2px var(--shadow-color);
         }
 
         .btn:hover {
-            background: var(--button-hover);
+            background: var(--button-primary-hover);
+            box-shadow: 0 4px 4px var(--shadow-color);
         }
+        
+        .btn-secondary {
+             background: var(--button-secondary-background);
+        }
+        .btn-secondary:hover {
+             background: var(--button-secondary-hover);
+        }
+
 
         #chat {
             flex: 1;
             padding: 20px;
             overflow-y: auto;
-            border: 1px solid var(--input-border);
             background-color: var(--background-secondary);
-            margin: 20px;
+            margin: 15px; /* Reduced margin */
             border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 5px var(--shadow-color);
         }
 
         .message {
-            margin: 10px 0;
-            padding: 10px;
-            border-radius: 5px;
-            line-height: 1.4;
+            margin-bottom: 12px;
+            padding: 12px 15px;
+            border-radius: 8px; /* Softer corners */
+            line-height: 1.6;
+            max-width: 85%; /* Messages don't span full width */
+            box-shadow: 0 1px 2px var(--shadow-color);
         }
 
         .message.user {
-            text-align: right;
+            margin-left: auto; /* Align to right */
             background-color: var(--user-message-background);
             color: var(--user-message-text);
+            border-bottom-right-radius: 0px; /* Chat bubble effect */
         }
 
         .message.assistant {
-            text-align: left;
+            margin-right: auto; /* Align to left */
             background-color: var(--assistant-message-background);
             color: var(--assistant-message-text);
+            border-bottom-left-radius: 0px; /* Chat bubble effect */
         }
 
-        .message p {
-            margin: 0;
-            white-space: pre-wrap;
+        /* Styling for Markdown content */
+        .message p, .message ul, .message ol, .message pre, .message blockquote {
+            margin: 0 0 0.5em 0;
+            white-space: pre-wrap; /* Keep this for basic text formatting */
         }
+        .message pre {
+            background-color: var(--background-primary);
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            border: 1px solid var(--input-border);
+        }
+        .message code {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: var(--background-primary);
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+        }
+        .message pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        .message blockquote {
+            border-left: 3px solid var(--text-assistant);
+            padding-left: 10px;
+            margin-left: 0;
+            color: var(--text-secondary);
+        }
+        .message strong { font-weight: bold; }
+        .message em { font-style: italic; }
+        .message ul, .message ol { padding-left: 20px; }
+
 
         #input-container {
             display: flex;
-            padding: 10px 20px;
+            padding: 15px;
             background-color: var(--background-secondary);
-            box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
-            align-items: flex-start;
+            box-shadow: 0 -2px 5px var(--shadow-color);
+            align-items: center; /* Vertically align items */
+            gap: 10px; /* Gap between elements */
         }
 
         #user-input {
             flex: 1;
-            min-height: 60px;
+            min-height: 40px; /* Material-like height */
             max-height: 150px;
-            padding: 10px;
-            font-size: 16px;
+            padding: 12px 15px;
+            font-size: 1em;
             border: 1px solid var(--input-border);
             border-radius: 4px;
             background-color: var(--input-background);
             color: var(--text-primary);
             resize: none;
             overflow-y: auto;
-            line-height: 1.4;
+            line-height: 1.5;
+            box-shadow: inset 0 1px 2px var(--shadow-color);
+        }
+        #user-input:focus {
+            outline: none;
+            border-color: var(--button-primary-background);
+            box-shadow: 0 0 0 2px var(--button-primary-background-alpha, rgba(0, 123, 255, 0.25));
         }
 
-        #input-container button {
-            margin-left: 10px;
-            padding: 10px 20px;
-            font-size: 16px;
-            border: 1px solid var(--input-border);
+
+        #input-container .action-buttons button {
+            padding: 10px 15px; /* Uniform padding */
+            font-size: 1em;
+            border: none;
             border-radius: 4px;
-            background-color: var(--button-background);
             color: white;
             cursor: pointer;
+            height: 44px; /* Match input field */
+            font-weight: 500;
+            text-transform: uppercase;
+            transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
         }
 
-        #input-container button:hover {
-            background-color: var(--button-hover);
+        #input-container .action-buttons button#send-button {
+            background-color: var(--button-primary-background);
         }
+        #input-container .action-buttons button#send-button:hover {
+            background-color: var(--button-primary-hover);
+        }
+        #input-container .action-buttons button#stop-button {
+            background-color: #dc3545; /* Red for stop */
+            display: none; /* Hidden by default */
+        }
+        #input-container .action-buttons button#stop-button:hover {
+            background-color: #c82333;
+        }
+
 
         #spinner {
             display: none;
-            margin-right: 10px;
-            order: -1;
+            /* margin-right: 10px; Remove, using gap in parent */
+            /* order: -1; Remove, let natural order flow or adjust HTML */
             align-self: center;
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #007BFF;
+            border: 4px solid var(--background-primary); /* Lighter border for contrast */
+            border-top: 4px solid var(--spinner-color);
             border-radius: 50%;
-            width: 20px;
-            height: 20px;
+            width: 24px; /* Slightly larger */
+            height: 24px;
             animation: spin 1s linear infinite;
         }
 
         #theme-toggle {
             background: none;
             border: none;
-            color: white;
-            font-size: 2.5em;
+            color: white; /* Ensure contrast with header */
+            font-size: 1.8em; /* Adjust for better visual balance */
             cursor: pointer;
-            margin-left: 10px;
+            padding: 0 5px; /* Add some padding */
             line-height: 1;
             display: flex;
             align-items: center;
             justify-content: center;
+        }
+        #theme-toggle:hover {
+            opacity: 0.8;
         }
 
         @keyframes spin {
@@ -190,22 +274,55 @@
 
         #model-selector {
             margin-right: 10px;
-            padding: 8px;
+            padding: 8px 12px;
             border-radius: 4px;
             background-color: var(--input-background);
             color: var(--text-primary);
             border: 1px solid var(--input-border);
-            font-size: 16px;
+            font-size: 0.9em;
             appearance: none;
-            background-image: url("data:image/svg+xml;utf8,<svg fill='black' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>");
+            background-image: url("data:image/svg+xml;utf8,<svg fill='var(--text-primary)' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>");
             background-repeat: no-repeat;
-            background-position-x: 100%;
+            background-position-x: calc(100% - 8px); /* Adjust position */
             background-position-y: 50%;
-            padding-right: 30px;
+            padding-right: 30px; /* Space for arrow */
         }
 
         [data-theme='dark'] #model-selector {
-            background-image: url("data:image/svg+xml;utf8,<svg fill='white' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>");
+            background-image: url("data:image/svg+xml;utf8,<svg fill='var(--text-primary)' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>");
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 600px) {
+            header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            header h1 {
+                margin-bottom: 10px; /* Space between title and buttons on wrap */
+            }
+            .header-buttons {
+                width: 100%;
+                justify-content: space-between; /* Distribute buttons better */
+            }
+            #input-container {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            #user-input {
+                margin-bottom: 10px;
+            }
+            #input-container .action-buttons {
+                display: flex;
+                justify-content: space-between;
+                gap: 10px;
+            }
+             #input-container .action-buttons button {
+                flex-grow: 1; /* Buttons take equal space */
+            }
+            .message {
+                max-width: 95%; /* More width for messages on small screens */
+            }
         }
     </style>
 </head>
@@ -216,46 +333,118 @@
             <select id="model-selector" style="display: none;">
                 <option disabled selected>Select Model</option>
             </select>
-            <button class="btn" onclick="window.location.href='notes.html'">Notes</button>
+            <button class="btn btn-secondary" onclick="window.location.href='notes.html'">Notes</button>
             <button id="theme-toggle">◐</button>
         </div>
     </header>
     <div id="chat"></div>
     <div id="input-container">
         <div id="spinner"></div>
-        <textarea id="user-input" placeholder="Enter message..." rows="2"></textarea>
-        <button id="send-button">Send</button>
-        <button id="new-button">New</button>
+        <textarea id="user-input" placeholder="Enter message..." rows="1"></textarea> <div class="action-buttons">
+            <button id="send-button">Send</button>
+            <button id="stop-button">Stop</button> <button id="new-button" class="btn-secondary">New</button> </div>
     </div>
 
     <script>
         // Configuration parameters
         const CHAT_TITLE = "ask Selma - your Ollama Chat Assistant";
-        const CHAT_MODEL = "llama3";
+        const CHAT_MODEL = "llama3"; // Default model
         const OLLAMA_PATH = "http://localhost:11434";
-        const DARK_MODE = false;
+        const DARK_MODE = false; // Default theme setting
         const SHOW_NOTE_APP = true;
         const MODEL_SELECTABLE = true;
 
         let AVAILABLE_MODELS = []; 
+        const version = "0.1.6"; // Incremented version
 
-        const version = "0.1.5";
+        // --- DOM Elements ---
+        const chatContainer = document.getElementById('chat');
+        const userInput = document.getElementById('user-input');
+        const sendButton = document.getElementById('send-button');
+        const newButton = document.getElementById('new-button');
+        const stopButton = document.getElementById('stop-button'); // Stop button
+        const spinner = document.getElementById('spinner');
+        const modelSelector = document.getElementById('model-selector');
+        const themeToggle = document.getElementById('theme-toggle');
+        const pageTitle = document.getElementById('page-title');
+        const headerTitle = document.getElementById('header-title');
+        const notesButton = document.querySelector('.btn[onclick="window.location.href=\'notes.html\'"]');
 
-        // Function to fetch available models
+        // --- State Variables ---
+        let all_messages = [];
+        let ollamaRequestController = null; // For aborting fetch requests
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', function() {
+            initTheme();
+            updateTitles();
+            
+            if (SHOW_NOTE_APP && notesButton) {
+                notesButton.style.display = 'inline-block';
+            } else if (notesButton) {
+                notesButton.style.display = 'none';
+            }
+
+            if (MODEL_SELECTABLE) {
+                fetchAvailableModels();
+                modelSelector.addEventListener('change', function() {
+                    localStorage.setItem('selectedModel', this.value);
+                    // Optionally, clear chat when model changes or notify user
+                    // newButton.click(); // Example: Start new chat on model change
+                });
+            }
+
+            sendButton.addEventListener('click', handleSendMessage);
+            userInput.addEventListener('keydown', handleUserInputKeydown);
+            newButton.addEventListener('click', handleNewConversation);
+            stopButton.addEventListener('click', handleStopGeneration); // Listener for stop button
+            themeToggle.addEventListener('click', toggleTheme);
+            
+            adjustTextareaHeight(userInput); // Initial adjustment
+            userInput.addEventListener('input', () => adjustTextareaHeight(userInput)); // Adjust on input
+        });
+        
+        // --- Theme Management ---
+        function setTheme(isDark) {
+            document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        }
+
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme) {
+                setTheme(savedTheme === 'dark');
+            } else {
+                setTheme(DARK_MODE); // Use default if no saved theme
+            }
+        }
+
+        function toggleTheme() {
+            const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+            setTheme(!isDarkMode);
+        }
+
+        // --- UI Updates ---
+        function updateTitles() {
+            pageTitle.textContent = CHAT_TITLE;
+            headerTitle.textContent = CHAT_TITLE;
+        }
+        
+        function adjustTextareaHeight(textarea) {
+            textarea.style.height = 'auto'; // Reset height
+            textarea.style.height = Math.min(textarea.scrollHeight, 150) + 'px'; // Set to scrollHeight up to max
+        }
+
+        // --- Model Fetching ---
         async function fetchAvailableModels() {
             try {
                 const response = await fetch(`${OLLAMA_PATH}/api/tags`);
-                if (!response.ok) {
-                    throw new Error('Failed to fetch models');
-                }
+                if (!response.ok) throw new Error('Failed to fetch models');
+                
                 const data = await response.json();
+                AVAILABLE_MODELS = data.models.map(model => model.name.split(':')[0]).filter((value, index, self) => self.indexOf(value) === index); // Unique base model names
                 
-                // Extract just the model names
-                AVAILABLE_MODELS = data.models.map(model => model.name);
-                
-                // Populate dropdown
-                const modelSelector = document.getElementById('model-selector');
-                modelSelector.innerHTML = '<option disabled>Select Model</option>'; // Reset
+                modelSelector.innerHTML = '<option disabled value="">Select Model</option>'; // Reset
                 
                 AVAILABLE_MODELS.forEach(model => {
                     const option = document.createElement('option');
@@ -264,270 +453,219 @@
                     modelSelector.appendChild(option);
                 });
 
-                // Set previously selected or default model
                 const savedModel = localStorage.getItem('selectedModel') || CHAT_MODEL;
                 if (AVAILABLE_MODELS.includes(savedModel)) {
                     modelSelector.value = savedModel;
-                } else if (AVAILABLE_MODELS.lengh > 0) {
-                    modelSelector.value = AVAILABLE_MODELS[0]
+                } else if (AVAILABLE_MODELS.length > 0) {
+                    modelSelector.value = AVAILABLE_MODELS[0];
                     localStorage.setItem('selectedModel', modelSelector.value);
+                } else {
+                     modelSelector.value = ""; // No models available, ensure placeholder is selected
                 }
 
-                // Show selector if models are available
-                if (AVAILABLE_MODELS.length > 0) {
-                    modelSelector.style.display = 'block';
-                }
+                modelSelector.style.display = AVAILABLE_MODELS.length > 0 ? 'inline-block' : 'none';
             } catch (error) {
                 console.error('Error fetching models:', error);
-                // Fallback to default model if fetch fails
-                AVAILABLE_MODELS = [CHAT_MODEL];
+                AVAILABLE_MODELS = [CHAT_MODEL]; // Fallback
+                modelSelector.style.display = 'none';
+                addMessage(`Error fetching models: ${error.message}. Using default.`, 'assistant-error');
             }
         }
 
-        // Show button note app
-        const notesButton = document.querySelector('.btn[onclick="window.location.href=\'notes.html\'"]');
-        if (!SHOW_NOTE_APP && notesButton) {
-            notesButton.style.display = 'none';
-        }
-        
-        // Theme toggle functionality
-        const themeToggle = document.getElementById('theme-toggle');
-        
-        function setTheme(isDark) {
-            document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
-            localStorage.setItem('theme', isDark ? 'dark' : 'light');
-        }
-
-        // Initialize theme
-        function initTheme() {
-            if (DARK_MODE) {
-                // If DARK_MODE is true, always start in dark mode
-                setTheme(true);
+        // --- Chat Logic ---
+        function addMessage(text, sender, update = false, isError = false) {
+            let parsedTextHtml;
+            if (sender === 'assistant' && !isError) { // Only parse markdown for assistant messages
+                parsedTextHtml = marked.parse(text); // Use marked.js
             } else {
-                // Otherwise, use user's last preference or default to light
-                const savedTheme = localStorage.getItem('theme');
-                setTheme(savedTheme === 'dark');
+                // For user messages or errors, just escape HTML to prevent XSS
+                const tempDiv = document.createElement('div');
+                tempDiv.textContent = text;
+                parsedTextHtml = tempDiv.innerHTML;
             }
+            
+            const messageClass = isError ? 'message assistant-error' : `message ${sender}`;
+
+            if (update && sender === 'assistant' && !isError) {
+                const assistantMessages = chatContainer.querySelectorAll('.message.assistant:not(.assistant-error)');
+                if (assistantMessages.length > 0) {
+                    const lastMessageElement = assistantMessages[assistantMessages.length - 1];
+                    lastMessageElement.innerHTML = parsedTextHtml; // Update entire message content
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                    return lastMessageElement;
+                }
+            }
+
+            const messageElement = document.createElement('div');
+            messageElement.className = messageClass;
+            messageElement.innerHTML = parsedTextHtml; // Use innerHTML as parsedText is HTML
+
+            chatContainer.appendChild(messageElement);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            return messageElement;
         }
 
-        // Theme toggle event listener
-        themeToggle.addEventListener('click', () => {
-            const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
-            setTheme(!isDarkMode);
-        });
-
-        // Set title on page load
-        document.getElementById('page-title').textContent = CHAT_TITLE;
-        document.getElementById('header-title').textContent = CHAT_TITLE;
-
-        // Initialize the theme when the page loads
-        initTheme();
-
-        // Markdown parsing function
-        function parseMarkdown(text) {
-            // First, handle nested formatting (bold inside italic or vice versa)
-            // Replace **_text_** and *__text__*
-            text = text.replace(/\*\*_(.*?)_\*\*/g, '<strong><em>$1</em></strong>');
-            text = text.replace(/\*__(.*)__\*/g, '<em><strong>$1</strong></em>');
-            
-            // Then handle standard bold and italic
-            text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-            text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
-            
-            return text;
+        function showSpinnerAndStopButton() {
+            spinner.style.display = 'block';
+            stopButton.style.display = 'inline-block';
+            sendButton.style.display = 'none'; // Hide send button
         }
 
-        async function ollamaRespond(userMessage) {
+        function hideSpinnerAndStopButton() {
+            spinner.style.display = 'none';
+            stopButton.style.display = 'none';
+            sendButton.style.display = 'inline-block'; // Show send button
+        }
 
-            // Retrieve selected model from localStorage or use default
+        function disableInput() {
+            userInput.disabled = true;
+            // Send and New buttons are handled by show/hide logic or remain active
+        }
+
+        function enableInput() {
+            userInput.disabled = false;
+            userInput.focus();
+        }
+        
+        async function ollamaRespond() {
             const selectedModel = localStorage.getItem('selectedModel') || CHAT_MODEL;
-
-            const messages = {
+            if (!selectedModel || AVAILABLE_MODELS.length === 0 && !AVAILABLE_MODELS.includes(selectedModel)) {
+                 addMessage("No model selected or available. Please select a model from the dropdown or check Ollama connection.", 'assistant-error', false, true);
+                 return;
+            }
+            
+            // Ensure only the last user message and assistant responses are sent if needed
+            // For simplicity, current 'all_messages' includes full history.
+            // You might want to truncate 'all_messages' for very long conversations.
+            const payload = {
                 model: selectedModel,
-                messages: all_messages,
+                messages: all_messages.slice(-10), // Send last 10 messages for context, adjust as needed
                 stream: true,
-                max_token: 300
+                // max_token: 300 // This is not a standard Ollama API parameter for /api/chat
+                // options: { num_ctx: 4096 } // Example of passing options if needed
             };
 
+            ollamaRequestController = new AbortController(); // Create new controller for this request
+            let assistantMessageElement = null; // To hold the current assistant message div
+            let partialMessage = '';
+
             try {
-                const response = await fetch(`${OLLAMA_PATH}/v1/chat/completions`, {
+                // Add an empty assistant message bubble to stream into
+                assistantMessageElement = addMessage("...", 'assistant'); 
+
+                const response = await fetch(`${OLLAMA_PATH}/api/chat`, { // Endpoint changed to /api/chat
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(messages)
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                    signal: ollamaRequestController.signal // Pass the abort signal
                 });
 
                 if (!response.ok) {
                     const errorText = await response.text();
-                    console.error('Complete error response:', errorText);
                     throw new Error(`HTTP error! status: ${response.status}, ${errorText}`);
                 }
 
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
-                let partialMessage = '';
-                addMessage(partialMessage, 'assistant', false);
-
+                
                 while (true) {
                     const { done, value } = await reader.read();
-
                     if (done) break;
 
                     const chunk = decoder.decode(value, { stream: true });
-
-                    try {
-                        // Parsing JSON streaming output
-                        const lines = chunk.split('\n').filter(line => line.trim() !== '');
-                        for (const line of lines) {
-                            if (line.startsWith('data:')) {
-                                const data = line.substring(5).trim();
-
-                                if (data === '[DONE]') {
-                                    // Stream end reached
-                                    all_messages.push({
-                                        role: 'assistant', 
-                                        content: partialMessage
-                                    });
-                                    break;
-                                }
-
-                                const jsonData = JSON.parse(data);
-                                if (jsonData.choices && jsonData.choices[0].delta && jsonData.choices[0].delta.content) {
-                                    partialMessage += jsonData.choices[0].delta.content;
-
-                                    // Update message in chat
-                                    addMessage(partialMessage, 'assistant', true);
-                                }
+                    // Ollama's /api/chat stream gives one JSON object per line
+                    const lines = chunk.split('\n').filter(line => line.trim() !== '');
+                    for (const line of lines) {
+                        try {
+                            const jsonData = JSON.parse(line);
+                            if (jsonData.message && jsonData.message.content) {
+                                partialMessage += jsonData.message.content;
+                                // Update the existing assistant message bubble
+                                addMessage(partialMessage, 'assistant', true);
                             }
+                            if (jsonData.done) { // Check for the 'done' flag in the stream object
+                                if (jsonData.error) {
+                                    throw new Error(`Ollama stream error: ${jsonData.error}`);
+                                }
+                                break; // Stream finished for this request
+                            }
+                        } catch (e) {
+                            console.error('Error parsing stream line:', line, e);
+                            // Potentially handle malformed JSON line if necessary
                         }
-                    } catch (e) {
-                        console.error('Error parsing stream:', e);
                     }
+                     if (lines.some(line => JSON.parse(line).done)) break;
                 }
-
-                return partialMessage;
+                
+                // Finalize assistant message in history
+                if (partialMessage.trim()) {
+                    all_messages.push({ role: 'assistant', content: partialMessage });
+                }
 
             } catch (error) {
-                console.error('Error:', error);
-                addMessage("There was a problem connecting to the chat.", 'assistant');
-            }
-        }
-
-        // Messages
-        let all_messages = [];
-
-        // DOM elements
-        const chatContainer = document.getElementById('chat');
-        const userInput = document.getElementById('user-input');
-        const sendButton = document.getElementById('send-button');
-        const newButton = document.getElementById('new-button');
-        const spinner = document.getElementById('spinner');
-
-        // Function to add or update a message in the chat
-        function addMessage(text, sender, update = false) {
-            // Parse Markdown
-            const parsedText = parseMarkdown(text);
-
-            if (update && sender === 'assistant') {
-                const assistantMessages = chatContainer.getElementsByClassName('message assistant');
-                if (assistantMessages.length > 0) {
-                    const messageElement = assistantMessages[assistantMessages.length - 1].querySelector('p');
-                    messageElement.innerHTML = parsedText;
-                    return;
+                if (error.name === 'AbortError') {
+                    console.log('Fetch aborted by user.');
+                    addMessage("Message generation stopped.", 'assistant-error', false, true);
+                     // If there was a partial message, add it to history before stopping
+                    if (partialMessage.trim() && assistantMessageElement) {
+                         all_messages.push({ role: 'assistant', content: partialMessage + " (stopped)" });
+                    } else if (assistantMessageElement) {
+                        // Remove the temporary "..." message if nothing was generated
+                        assistantMessageElement.remove();
+                    }
+                } else {
+                    console.error('Error communicating with Ollama:', error);
+                    addMessage(`Error: ${error.message}`, 'assistant-error', false, true);
+                     if (assistantMessageElement) assistantMessageElement.remove(); // Remove temp bubble on error
                 }
+            } finally {
+                hideSpinnerAndStopButton();
+                enableInput();
+                ollamaRequestController = null; // Clear the controller
+                adjustTextareaHeight(userInput); // Adjust textarea in case content changed
             }
-
-            const message = document.createElement('div');
-            message.className = `message ${sender}`;
-
-            const messageText = document.createElement('p');
-            messageText.innerHTML = parsedText;
-
-            message.appendChild(messageText);
-            chatContainer.appendChild(message);
-            chatContainer.scrollTop = chatContainer.scrollHeight;
         }
 
-        // Show spinner
-        function showSpinner() {
-            spinner.style.display = 'block';
-        }
+        // --- Event Handlers ---
+        async function handleSendMessage() {
+            const userMessageText = userInput.value.trim();
+            if (!userMessageText) return;
 
-        // Hide spinner
-        function hideSpinner() {
-            spinner.style.display = 'none';
-        }
-
-        // Disable input field and button
-        function disableInput() {
-            userInput.disabled = true;
-            sendButton.disabled = true;
-        }
-
-        // Enable input field and button
-        function enableInput() {
-            userInput.disabled = false;
-            sendButton.disabled = false;
-            userInput.focus();
-        }
-
-        // Send button event listener
-        sendButton.addEventListener('click', async () => {
-            const userMessage = userInput.value.trim();
-            if (!userMessage) return;
-
-            // Add user message
-            all_messages.push({
-                role: 'user', 
-                content: userMessage
-            });
-
-            addMessage(userMessage, 'user');
+            addMessage(userMessageText, 'user');
+            all_messages.push({ role: 'user', content: userMessageText });
             userInput.value = '';
+            adjustTextareaHeight(userInput); // Reset height after sending
 
-            // Show spinner and disable input
-            showSpinner();
+            showSpinnerAndStopButton();
             disableInput();
-
-            // Get response from Ollama and add
-            await ollamaRespond(userMessage);
-
-            // Hide spinner and enable input
-            hideSpinner();
-            enableInput();
-        });
-
-        userInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && e.shiftKey) {
-                return;
-            } else if (e.key === 'Enter') {
-                e.preventDefault();
-                sendButton.click();
-            }
-        });
-
-        // New button event listener
-        newButton.addEventListener('click', () => {
-            all_messages = []; // Deletes all saved messages
-            chatContainer.innerHTML = ''; // Clears chat area
-            userInput.value = ''; // Clears text input field
-            userInput.focus();
-        });
-
-        // Model selector
-        document.addEventListener('DOMContentLoaded', function() {
-            const modelSelector = document.getElementById('model-selector');
             
-            if (MODEL_SELECTABLE) {
-                // Fetch models when page loads
-                fetchAvailableModels();
+            await ollamaRespond();
+        }
 
-                modelSelector.addEventListener('change', function() {
-                    localStorage.setItem('selectedModel', this.value);
-                });
+        function handleUserInputKeydown(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSendMessage();
             }
-        });
+        }
+
+        function handleNewConversation() {
+            all_messages = [];
+            chatContainer.innerHTML = '';
+            userInput.value = '';
+            enableInput(); // Ensure input is enabled
+            adjustTextareaHeight(userInput);
+            // Optionally, reset model to default or keep current selection
+            // if (AVAILABLE_MODELS.length > 0) modelSelector.value = localStorage.getItem('selectedModel') || CHAT_MODEL;
+        }
+
+        function handleStopGeneration() {
+            if (ollamaRequestController) {
+                ollamaRequestController.abort();
+                console.log("Stop generation requested.");
+            }
+        }
+
     </script>
 </body>
 </html>
