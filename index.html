@@ -442,7 +442,7 @@
                 if (!response.ok) throw new Error('Failed to fetch models');
                 
                 const data = await response.json();
-                AVAILABLE_MODELS = data.models.map(model => model.name.split(':')[0]).filter((value, index, self) => self.indexOf(value) === index); // Unique base model names
+                AVAILABLE_MODELS = data.models.map(model => model.name);
                 
                 modelSelector.innerHTML = '<option disabled value="">Select Model</option>'; // Reset
                 
